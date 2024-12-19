@@ -65,11 +65,6 @@ def get_app_registrations():
         
         app_registrations = response.json().get('value', [])
         logging.info(f"Fetched {len(app_registrations)} app registrations")
-        
-        # Debug log the first app registration
-        if app_registrations:
-            logging.info(f"Sample app data: {json.dumps(app_registrations[0], indent=2)}")
-
         return app_registrations
 
     except requests.exceptions.RequestException as e:

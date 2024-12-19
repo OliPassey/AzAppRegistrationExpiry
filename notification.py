@@ -7,7 +7,7 @@ from datetime import datetime
 import requests
 import json
 import logging
-from data_export import generate_html
+from data_export import generate_html, generate_expiry_text
 
 # Load environment variables
 load_dotenv()
@@ -65,11 +65,11 @@ def send_notifications(app_registrations):
             days_to_expiry = (expiry_date - current_date).days
             if days_to_expiry in notification_periods or days_to_expiry < 0:
                 subject = f"App Registration Expiry Notification: {app['displayName']}"
-                body = f"The app registration {app['displayName']} is set to expire in {days_to_expiry} days on {expiry_date.strftime('%Y-%m-%d')}.<br><br>{html_content}"
+                body = generate_expiry_text(app['displayName'], days_to_expiry, expiry_date) + html_content
 
                 # Fetch and debug log owner information
                 owners = app.get('owners', [])
-                logging.info(f"Found owners for {app['displayName']}: {json.dumps(owners, indent=2)}")
+                #logging.info(f"Found owners for {app['displayName']}: {json.dumps(owners, indent=2)}")
 
                 # Get CC emails from owners
                 cc_emails = []

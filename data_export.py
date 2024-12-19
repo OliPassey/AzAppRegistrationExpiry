@@ -32,6 +32,15 @@ def generate_html(app_registrations):
     <head>
         <title>App Registrations</title>
         <style>
+            body {{
+                font-family: Arial, sans-serif;
+                margin: 20px;
+                color: #333;
+            }}
+            .intro {{
+                margin-bottom: 20px;
+                line-height: 1.5;
+            }}
             table {{
                 width: 100%;
                 border-collapse: collapse;
@@ -59,6 +68,36 @@ def generate_html(app_registrations):
         </style>
     </head>
     <body>
+        <div class="intro">
+            <h2>Azure App Registration Expiry Notification</h2>
+            <p>This is an automated notification regarding expiring Azure App Registrations that you own or manage.</p>
+            
+            <p><strong>Why am I receiving this?</strong><br>
+            You are receiving this email because you are listed as an owner of one or more Azure App Registrations that are approaching their expiration date or have already expired.</p>
+            
+            <p><strong>Required Actions:</strong></p>
+            <ul>
+                <li>Review the list of app registrations below</li>
+                <li>For any expiring or expired registrations:
+                    <ul>
+                        <li>Verify if the app registration is still needed</li>
+                        <li>If needed, renew the credentials before they expire</li>
+                        <li>If not needed, consider removing the app registration</li>
+                    </ul>
+                </li>
+            </ul>
+            
+            <p><strong>Color Coding:</strong></p>
+            <ul>
+                <li style="background-color: #d4edda; padding: 3px;">Green: More than 30 days until expiry</li>
+                <li style="background-color: #fff3cd; padding: 3px;">Yellow: Between 8-30 days until expiry</li>
+                <li style="background-color: #ffeeba; padding: 3px;">Orange: 7 days or less until expiry</li>
+                <li style="background-color: #f8d7da; padding: 3px;">Red: Expired</li>
+            </ul>
+
+            <p>If you need assistance, please contact the IT Support team.</p>
+        </div>
+
         <h1>App Registrations</h1>
         <p>Exported on: {current_time}</p>
         <table>
@@ -126,6 +165,27 @@ def generate_html(app_registrations):
     """
     
     return html
+
+def generate_expiry_text(app_name, days_to_expiry, expiry_date):
+    if days_to_expiry > 30:
+        color = "#28a745"  # green
+    elif days_to_expiry > 7:
+        color = "#ffc107"  # yellow
+    elif days_to_expiry > 0:
+        color = "#ff9800"  # orange
+    else:
+        color = "#dc3545"  # red
+        days_to_expiry = "EXPIRED"
+
+    return f"""
+    <div style="font-size: 26px; margin-bottom: 20px;">
+        <p>The app registration <strong>{app_name}</strong> is set to expire in 
+        <span style="color: {color}; font-weight: bold; font-size: 28px;">
+            {days_to_expiry}
+        </span> 
+        days on <strong>{expiry_date.strftime('%Y-%m-%d')}</strong></p>
+    </div>
+    """
 
 # Example usage
 if __name__ == "__main__":
