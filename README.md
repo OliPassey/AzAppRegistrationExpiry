@@ -21,7 +21,7 @@ You will need to create an App Registration with API Permissions:
 - User.Read
 - User.Read.All  
 
-Create an Excel Sheet within Business OneDrive and add the ID to the .env file  
+Create an Excel Sheet within Business OneDrive and add the ID to the .env file  (sourcedoc=xxx in the URL)  
 Add SMTP Sending details to .env (AWS Simple E-Mail Service was used in development)  
 
 
