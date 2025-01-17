@@ -187,6 +187,18 @@ def generate_expiry_text(app_name, days_to_expiry, expiry_date):
     </div>
     """
 
+def sort_app_registrations(app_registrations):
+    current_date = datetime.utcnow()
+    for app in app_registrations:
+        expiry_date_str = app["passwordCredentials"][0]["endDateTime"]
+        expiry_date = datetime.strptime(expiry_date_str.split('.')[0], '%Y-%m-%dT%H:%M:%S')
+        days_to_expiry = (expiry_date - current_date).days
+        app["days_to_expiry"] = days_to_expiry
+        app["expiry_date"] = expiry_date
+
+    sorted_apps = sorted(app_registrations, key=lambda x: x["days_to_expiry"], reverse=False)
+    return sorted_apps
+
 # Example usage
 if __name__ == "__main__":
     # Sample app registration data
@@ -197,10 +209,21 @@ if __name__ == "__main__":
         },
         {
             "displayName": "App2",
+            "passwordCredentials": [{"endDateTime": "2023-12-31T23:59:59.9999999Z"}]
+        },
+        {
+            "displayName": "App3",
             "passwordCredentials": [{"endDateTime": "2025-01-15T23:59:59.9999999Z"}]
         }
     ]
-    
+
+    sorted_apps = sort_app_registrations(app_registrations)
+    html_output = ""
+    for app in sorted_apps:
+        html_output += generate_expiry_text(app["displayName"], app["days_to_expiry"], app["expiry_date"])
+
+    print(html_output)
+
     # Write to JSON
     write_to_json(app_registrations)
     

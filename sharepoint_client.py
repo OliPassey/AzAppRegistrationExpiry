@@ -11,14 +11,62 @@ load_dotenv()
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def update_excel_file(file_id, data):
+def get_access_token():
+    client_id = os.getenv('AZURE_CLIENT_ID')
+    client_secret = os.getenv('AZURE_CLIENT_SECRET')
+    tenant_id = os.getenv('AZURE_TENANT_ID')
+
+    token_url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
+    token_data = {
+        'grant_type': 'client_credentials',
+        'client_id': client_id,
+        'client_secret': client_secret,
+        'scope': 'https://graph.microsoft.com/.default'
+    }
+
+    token_response = requests.post(token_url, data=token_data)
+    access_token = token_response.json().get('access_token')
+    if not access_token:
+        logging.error("Failed to obtain access token")
+        logging.error(token_response.json())
+        return None
+
+    return access_token
+
+def get_drive_id(site_id):
+    access_token = get_access_token()
+    if not access_token:
+        return None
+
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+        'Content-Type': 'application/json'
+    }
+
+    drives_url = f"https://graph.microsoft.com/v1.0/sites/{site_id}/drives"
+    response = requests.get(drives_url, headers=headers)
+    if response.status_code != 200:
+        logging.error(f"Failed to get drives: {response.status_code}")
+        logging.error(response.json())
+        return None
+
+    drives = response.json().get('value', [])
+    if not drives:
+        logging.error("No drives found")
+        return None
+
+    # Assuming you want the first drive in the list
+    drive_id = drives[0].get('id')
+    logging.info(f"Found drive ID: {drive_id}")
+    return drive_id
+
+def update_excel_file(site_id, drive_id, file_id, data):
     """
     Update Excel Online file with new data using OneDrive for Business API
     """
     client_id = os.getenv('AZURE_CLIENT_ID')
     client_secret = os.getenv('AZURE_CLIENT_SECRET')
     tenant_id = os.getenv('AZURE_TENANT_ID')
-    user_email = os.getenv('USER_EMAIL')
 
     # Get access token
     token_url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
@@ -30,7 +78,11 @@ def update_excel_file(file_id, data):
     }
 
     token_response = requests.post(token_url, data=token_data)
-    access_token = token_response.json()['access_token']
+    access_token = token_response.json().get('access_token')
+    if not access_token:
+        logging.error("Failed to obtain access token")
+        logging.error(token_response.json())
+        return
 
     headers = {
         'Authorization': f'Bearer {access_token}',
@@ -38,21 +90,14 @@ def update_excel_file(file_id, data):
     }
 
     try:
-        # Get the drive ID first
-        drives_url = f"https://graph.microsoft.com/v1.0/users/{user_email}/drive"
-        drive_response = requests.get(drives_url, headers=headers)
-        drive_response.raise_for_status()
-        drive_id = drive_response.json().get('id')
-        logging.info(f"Found drive ID: {drive_id}")
-
         # Get the file details to verify it exists
-        file_url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{file_id}"
+        file_url = f"https://graph.microsoft.com/v1.0/sites/{site_id}/drives/{drive_id}/items/{file_id}"
         file_response = requests.get(file_url, headers=headers)
         file_response.raise_for_status()
         logging.info(f"Found file: {file_response.json().get('name')}")
 
         # Clear existing data (except header)
-        clear_url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{file_id}/workbook/worksheets/Sheet1/range(address='A2:D1000')"
+        clear_url = f"https://graph.microsoft.com/v1.0/sites/{site_id}/drives/{drive_id}/items/{file_id}/workbook/worksheets/Sheet1/range(address='A2:D1000')"
         clear_data = {
             "values": [[""]*4]*999
         }
@@ -61,7 +106,7 @@ def update_excel_file(file_id, data):
         logging.info("Cleared existing data from Excel file")
 
         # Write new data
-        update_url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{file_id}/workbook/worksheets/Sheet1/range(address='A2:D{len(data)+1}')"
+        update_url = f"https://graph.microsoft.com/v1.0/sites/{site_id}/drives/{drive_id}/items/{file_id}/workbook/worksheets/Sheet1/range(address='A2:D{len(data)+1}')"
         update_data = {
             "values": data
         }
@@ -89,7 +134,7 @@ def store_app_registrations(app_registrations):
 
         expiry_date = password_credentials[0].get('endDateTime')
         if expiry_date:
-            if (expiry_date.endswith('ZZ')):
+            if expiry_date.endswith('ZZ'):
                 expiry_date = expiry_date[:-1]
             elif expiry_date.endswith('Z'):
                 expiry_date = expiry_date[:-1]
@@ -116,10 +161,20 @@ def store_app_registrations(app_registrations):
 
     # Update Excel file
     try:
-        excel_file_id = os.getenv('EXCEL_FILE_ID')
-        update_excel_file(excel_file_id, excel_data)
+        site_id = os.getenv('SHAREPOINT_SITE_ID')
+        drive_id = os.getenv('SHAREPOINT_DRIVE_ID')
+        file_id = os.getenv('EXCEL_FILE_ID')
+        update_excel_file(site_id, drive_id, file_id, excel_data)
         logging.info("Successfully updated Excel file")
     except Exception as e:
         logging.error(f"Failed to update Excel file: {e}")
 
     logging.info("Finished processing app registrations")
+
+if __name__ == "__main__":
+    site_id = os.getenv('SHAREPOINT_SITE_ID')
+    drive_id = get_drive_id(site_id)
+    if drive_id:
+        logging.info(f"Drive ID: {drive_id}")
+    else:
+        logging.error("Failed to obtain drive ID")

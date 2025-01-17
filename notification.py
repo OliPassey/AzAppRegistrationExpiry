@@ -30,7 +30,7 @@ def send_notifications(app_registrations):
 
     # Get the current date
     current_date = datetime.utcnow()
-    notification_periods = [60, 30, 7, 1]
+    notification_periods = [60, 30, 7, 3, 2, 1]
 
     # Generate HTML content
     html_content = generate_html(app_registrations)

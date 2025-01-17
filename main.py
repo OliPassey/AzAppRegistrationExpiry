@@ -1,5 +1,5 @@
 from azure_client import get_app_registrations
-from sharepoint_client import store_app_registrations  # Uncomment this line
+from sharepoint_client import store_app_registrations
 from notification import send_notifications
 from data_export import write_to_json, generate_html
 
