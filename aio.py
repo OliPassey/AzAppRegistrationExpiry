@@ -4,6 +4,9 @@ import logging
 import json
 import msal
 import requests
+import smtplib
+from email.mime.text import MIMEText
+from email.utils import formataddr
 from datetime import datetime, timezone
 
 # Load environment variables
@@ -227,13 +230,37 @@ def generate_html(app_registrations):
     
     return html
 
+def send_notifications(app_registrations):
+    # Email credentials from environment variables
+    smtp_server = os.getenv('SMTP_SERVER')
+    smtp_port = int(os.getenv('SMTP_PORT'))
+    smtp_username = os.getenv('SMTP_USERNAME')
+    smtp_password = os.getenv('SMTP_PASSWORD')
+    from_email = os.getenv('FROM_EMAIL')
+    from_name = os.getenv('FROM_NAME')
+    to_email = os.getenv('TO_EMAIL')
+
+    # Generate HTML content
+    html_content = generate_html(app_registrations)
+
+    # Create email message
+    subject = "App Registration Expiry Notification"
+    msg = MIMEText(html_content, 'html')
+    msg['Subject'] = subject
+    msg['From'] = formataddr((from_name, from_email))
+    msg['To'] = to_email
+
+    try:
+        logging.info(f"Sending email to {to_email}")
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_username, smtp_password)
+            server.sendmail(from_email, [to_email], msg.as_string())
+        logging.info("Successfully sent email")
+    except Exception as e:
+        logging.error(f"Failed to send email: {e}")
+
 if __name__ == "__main__":
     app_registrations = get_app_registrations()
     sorted_app_registrations = sort_app_registrations(app_registrations)
-    # Write to JSON file for inspection
-    with open('debug_app_registrations.json', 'w') as f:
-        json.dump(sorted_app_registrations, f, indent=2)
-    # Write to HTML file for inspection
-    html_output = generate_html(sorted_app_registrations)
-    with open('app_registrations.html', 'w') as f:
-        f.write(html_output)
+    send_notifications(sorted_app_registrations)
