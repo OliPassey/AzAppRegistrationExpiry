@@ -1,13 +1,13 @@
 import os
-from dotenv import load_dotenv
 import logging
 import json
-import msal
-import requests
 import smtplib
 from email.mime.text import MIMEText
 from email.utils import formataddr
 from datetime import datetime, timezone
+from dotenv import load_dotenv
+import requests
+import msal
 
 # Load environment variables
 load_dotenv()
@@ -47,7 +47,6 @@ def get_app_registrations():
         return []
 
     # Fetch app registrations with owners
-    # Updated URL to include both app registration and owner data
     graph_url = (
         "https://graph.microsoft.com/v1.0/applications"
         "?$select=id,appId,displayName,passwordCredentials"
@@ -62,10 +61,6 @@ def get_app_registrations():
     try:
         response = requests.get(graph_url, headers=headers)
         response.raise_for_status()
-        
-        # Debug log the raw response
-        #logging.info(f"API Response Status: {response.status_code}")
-        #logging.debug(f"API Response: {response.text[:1000]}...")  # First 1000 chars
         
         app_registrations = response.json().get('value', [])
         logging.info(f"Fetched {len(app_registrations)} app registrations")
@@ -242,6 +237,12 @@ def send_notifications(app_registrations):
 
     # Generate HTML content
     html_content = generate_html(app_registrations)
+
+    # Export JSON and HTML files
+    with open('debug_app_registrations.json', 'w') as f:
+        json.dump(app_registrations, f, indent=2)
+    with open('app_registrations.html', 'w') as f:
+        f.write(html_content)
 
     # Create email message
     subject = "App Registration Expiry Notification"
