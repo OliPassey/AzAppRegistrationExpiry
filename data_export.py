@@ -5,19 +5,19 @@ from datetime import datetime
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def write_to_json(app_registrations, filename='app_registrations.json'):
-    """
-    Write app registration data to a JSON file.
+# def write_to_json(app_registrations, filename='app_registrations.json'):
+#     """
+#     Write app registration data to a JSON file.
     
-    :param app_registrations: List of app registration data
-    :param filename: Name of the JSON file to write to
-    """
-    try:
-        with open(filename, 'w') as f:
-            json.dump(app_registrations, f, indent=4)
-        logging.info(f"App registration data successfully written to {filename}")
-    except Exception as e:
-        logging.error(f"Failed to write app registration data to {filename}: {e}")
+#     :param app_registrations: List of app registration data
+#     :param filename: Name of the JSON file to write to
+#     """
+#     try:
+#         with open(filename, 'w') as f:
+#             json.dump(app_registrations, f, indent=4)
+#         logging.info(f"App registration data successfully written to {filename}")
+#     except Exception as e:
+#         logging.error(f"Failed to write app registration data to {filename}: {e}")
 
 def generate_html(app_registrations):
     """

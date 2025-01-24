@@ -78,6 +78,10 @@ def sort_app_registrations(app_registrations):
         if app["passwordCredentials"]:
             expiry_date_str = app["passwordCredentials"][0]["endDateTime"]
             try:
+                if '.' in expiry_date_str:
+                    expiry_date_str = expiry_date_str.split('.')[0] + '.' + expiry_date_str.split('.')[1][:6] + 'Z'
+                if expiry_date_str.endswith('ZZ'):
+                    expiry_date_str = expiry_date_str[:-1]
                 expiry_date = datetime.strptime(expiry_date_str, '%Y-%m-%dT%H:%M:%S.%fZ').replace(tzinfo=timezone.utc)
             except ValueError:
                 expiry_date = datetime.strptime(expiry_date_str, '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone.utc)
@@ -183,6 +187,10 @@ def generate_html(app_registrations):
         expiry_date = password_credentials[0].get('endDateTime')
         if expiry_date:
             try:
+                if '.' in expiry_date:
+                    expiry_date = expiry_date.split('.')[0] + '.' + expiry_date.split('.')[1][:6] + 'Z'
+                if expiry_date.endswith('ZZ'):
+                    expiry_date = expiry_date[:-1]
                 expiry_date = datetime.strptime(expiry_date, '%Y-%m-%dT%H:%M:%S.%fZ').replace(tzinfo=timezone.utc)
             except ValueError:
                 expiry_date = datetime.strptime(expiry_date, '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone.utc)
