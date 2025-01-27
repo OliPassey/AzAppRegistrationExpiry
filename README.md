@@ -1,35 +1,49 @@
-# AzAppRegistrationExpiry
+# Azure Function App
 
-A simple python app to warn of upcoming App Registration Secret / Password Expiry on Azure Entra ID.
+This project is an Azure Function that authenticates to the Microsoft Graph API and fetches app registrations. The function is triggered by an HTTP request.
 
-## Installation
+## Project Structure
 
-Requires Python 3.12  
-Install requirements from requirements.txt
-
-```bash
-pip install -r requirements.txt
 ```
+azure-function-app
+├── aio
+│   ├── __init__.py       # Contains the main logic for the Azure Function
+│   └── function.json     # Configuration for the Azure Function
+├── local.settings.json    # Local configuration settings
+├── requirements.txt       # Required Python packages
+└── README.md              # Project documentation
+```
+
+## Setup Instructions
+
+1. **Clone the repository**:
+   ```
+   git clone <repository-url>
+   cd azure-function-app
+   ```
+
+2. **Install dependencies**:
+   Make sure you have Python installed, then run:
+   ```
+   pip install -r requirements.txt
+   ```
+
+3. **Configure environment variables**:
+   Create a `.env` file or set the following environment variables in `local.settings.json`:
+   - `AZURE_CLIENT_ID`: Your Azure AD application client ID
+   - `AZURE_CLIENT_SECRET`: Your Azure AD application client secret
+   - `AZURE_TENANT_ID`: Your Azure AD tenant ID
+
+4. **Run the function locally**:
+   Use the Azure Functions Core Tools to run the function:
+   ```
+   func start
+   ```
 
 ## Usage
 
-Amend the credentials in .env to match your environment.  
-You will need to create an App Registration with API Permissions:  
-- Application.ReadWrite.All  
-- Files.ReadWrite.All
-- Sites.ReadWrite.All
-- User.Read
-- User.Read.All  
+Once the function is running, you can trigger it by sending an HTTP request to the endpoint provided in the console output. The function will authenticate to the Microsoft Graph API and return the app registrations.
 
-Create an Excel Sheet within Business OneDrive and add the ID to the .env file  (sourcedoc=xxx in the URL)  
-Add SMTP Sending details to .env (AWS Simple E-Mail Service was used in development)  
+## License
 
-
-```python
-python main.py
-```
-
-## Contributing
-
-Pull requests are welcome. For major changes, please open an issue first
-to discuss what you would like to change.
+This project is licensed under the MIT License.

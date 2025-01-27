@@ -1,5 +1,4 @@
-azure-identity
-azure-mgmt-resource==23.2.0
-msal==1.24.0
-python-dotenv==1.0.0
-requests==2.31.0
+azure-functions
+msal
+requests
+python-dotenv

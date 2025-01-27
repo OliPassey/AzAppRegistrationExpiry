@@ -5,15 +5,20 @@ import smtplib
 from email.mime.text import MIMEText
 from email.utils import formataddr
 from datetime import datetime, timezone
-from dotenv import load_dotenv
 import requests
 import msal
-
-# Load environment variables
-load_dotenv()
+import azure.functions as func
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+def main(myTimer: func.TimerRequest) -> None:
+    logging.info("Processing a request to fetch app registrations.")
+
+    app_registrations = get_app_registrations()
+    if app_registrations:
+        sorted_app_registrations = sort_app_registrations(app_registrations)
+        send_notifications(sorted_app_registrations)
 
 def get_app_registrations():
     logging.info("Authenticating to Microsoft Graph API")
@@ -73,8 +78,8 @@ def get_app_registrations():
 def sort_app_registrations(app_registrations):
     current_date = datetime.now(timezone.utc)
     for app in app_registrations:
-        if app["passwordCredentials"]:
-            expiry_date_str = app["passwordCredentials"][0]["endDateTime"]
+        for credential in app["passwordCredentials"]:
+            expiry_date_str = credential["endDateTime"]
             try:
                 if '.' in expiry_date_str:
                     expiry_date_str = expiry_date_str.split('.')[0] + '.' + expiry_date_str.split('.')[1][:6] + 'Z'
@@ -84,13 +89,10 @@ def sort_app_registrations(app_registrations):
             except ValueError:
                 expiry_date = datetime.strptime(expiry_date_str, '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone.utc)
             days_to_expiry = (expiry_date - current_date).days
-            app["days_to_expiry"] = days_to_expiry
-            app["expiry_date"] = expiry_date.isoformat()
-        else:
-            app["days_to_expiry"] = None
-            app["expiry_date"] = None
+            credential["days_to_expiry"] = days_to_expiry
+            credential["expiry_date"] = expiry_date.isoformat()
 
-    sorted_apps = sorted(app_registrations, key=lambda x: (x["days_to_expiry"] is None, x["days_to_expiry"]), reverse=False)
+    sorted_apps = sorted(app_registrations, key=lambda x: (min([cred["days_to_expiry"] for cred in x["passwordCredentials"]]) if x["passwordCredentials"] else float('inf')), reverse=False)
     return sorted_apps
 
 def generate_html(app_registrations):
@@ -178,40 +180,32 @@ def generate_html(app_registrations):
     """
     
     for app in app_registrations:
-        password_credentials = app.get('passwordCredentials', [])
-        if not password_credentials:
-            continue
+        owners = app.get('owners', [])
+        owner_upns = [owner.get('userPrincipalName') for owner in owners if owner.get('userPrincipalName')]
+        owner_list = ', '.join(owner_upns) if owner_upns else 'No owners'
 
-        expiry_date = password_credentials[0].get('endDateTime')
-        if expiry_date:
-            try:
-                if '.' in expiry_date:
-                    expiry_date = expiry_date.split('.')[0] + '.' + expiry_date.split('.')[1][:6] + 'Z'
-                if expiry_date.endswith('ZZ'):
-                    expiry_date = expiry_date[:-1]
-                expiry_date = datetime.strptime(expiry_date, '%Y-%m-%dT%H:%M:%S.%fZ').replace(tzinfo=timezone.utc)
-            except ValueError:
-                expiry_date = datetime.strptime(expiry_date, '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone.utc)
-            days_to_expiry = (expiry_date - datetime.now(timezone.utc)).days
-            
-            if days_to_expiry > 30:
-                color_class = "green"
-            elif 7 < days_to_expiry <= 30:
-                color_class = "yellow"
-            elif 1 <= days_to_expiry <= 7:
-                color_class = "orange"
+        for credential in app.get('passwordCredentials', []):
+            expiry_date = credential.get('expiry_date')
+            days_to_expiry = credential.get('days_to_expiry')
+
+            if days_to_expiry is not None:
+                if days_to_expiry > 30:
+                    color_class = "green"
+                elif 7 < days_to_expiry <= 30:
+                    color_class = "yellow"
+                elif 1 <= days_to_expiry <= 7:
+                    color_class = "orange"
+                else:
+                    color_class = "red"
+                    days_to_expiry = "EXPIRED"
             else:
                 color_class = "red"
                 days_to_expiry = "EXPIRED"
 
-            owners = app.get('owners', [])
-            owner_upns = [owner.get('userPrincipalName') for owner in owners if owner.get('userPrincipalName')]
-            owner_list = ', '.join(owner_upns) if owner_upns else 'No owners'
-
             html += f"""
             <tr class="{color_class}">
                 <td>{app['displayName']}</td>
-                <td>{expiry_date.strftime('%Y-%m-%d')}</td>
+                <td>{expiry_date.split('T')[0]}</td>
                 <td>{days_to_expiry}</td>
                 <td>{owner_list}</td>
             </tr>
@@ -238,11 +232,14 @@ def send_notifications(app_registrations):
     # Generate HTML content
     html_content = generate_html(app_registrations)
 
-    # Export JSON and HTML files
-    with open('debug_app_registrations.json', 'w') as f:
-        json.dump(app_registrations, f, indent=2)
-    with open('app_registrations.html', 'w') as f:
-        f.write(html_content)
+    # Collect unique owner email addresses
+    unique_owner_emails = set()
+    for app in app_registrations:
+        owners = app.get('owners', [])
+        for owner in owners:
+            email = owner.get('userPrincipalName')
+            if email:
+                unique_owner_emails.add(email)
 
     # Create email message
     subject = "App Registration Expiry Notification"
@@ -250,18 +247,14 @@ def send_notifications(app_registrations):
     msg['Subject'] = subject
     msg['From'] = formataddr((from_name, from_email))
     msg['To'] = to_email
+    msg['Cc'] = ', '.join(unique_owner_emails)
 
     try:
-        logging.info(f"Sending email to {to_email}")
+        logging.info(f"Sending email to {to_email} with CC to {', '.join(unique_owner_emails)}")
         with smtplib.SMTP(smtp_server, smtp_port) as server:
             server.starttls()
             server.login(smtp_username, smtp_password)
-            server.sendmail(from_email, [to_email], msg.as_string())
+            server.sendmail(from_email, [to_email] + list(unique_owner_emails), msg.as_string())
         logging.info("Successfully sent email")
     except Exception as e:
         logging.error(f"Failed to send email: {e}")
-
-if __name__ == "__main__":
-    app_registrations = get_app_registrations()
-    sorted_app_registrations = sort_app_registrations(app_registrations)
-    send_notifications(sorted_app_registrations)
