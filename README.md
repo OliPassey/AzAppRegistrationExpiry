@@ -57,8 +57,34 @@ This Azure Function App fetches Azure App Registrations, checks for expiring sec
 
 ## Usage
 
-Once the function is running, you can trigger it by sending an HTTP request to the endpoint provided in the console output. The function will authenticate to the Microsoft Graph API and return the app registrations.
+Once the function is running, it will run every week day morning at 9am and send an email with results. The TO_EMAIL should be the administrator email for EntraID or whoever looks after App Registrations. It will also CC: all App Owners as listed in the App Registration.  
 
-## License
+## Deployment  
 
-This project is licensed under the MIT License.
+1. **Create an Azure DevOps Project (Private)** 
+2. **Create a Variable Group in Azure DevOps:**
+
+Go to Pipelines > Library.  
+
+Click on + Variable group.  
+
+Name your variable group (e.g., MyVariableGroup).  
+
+Add the following variables and mark sensitive variables as secrets:
+
+AzureWebJobsStorage  
+AZURE_CLIENT_ID  
+AZURE_CLIENT_SECRET  
+AZURE_TENANT_ID  
+SMTP_SERVER  
+SMTP_PORT  
+SMTP_USERNAME  
+SMTP_PASSWORD  
+FROM_EMAIL  
+FROM_NAME  
+TO_EMAIL  
+
+3. **Create a Pipeline from the Azure-pipeline.yaml file in the root of the repo**
+4. **Run the Pipeline:**
+
+Trigger the pipeline to deploy the infrastructure and the function app code.
