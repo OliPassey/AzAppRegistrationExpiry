@@ -26,18 +26,8 @@ stages:
           # Create storage account
           az storage account create --name $(storageAccountName) --location $(location) --resource-group $(resourceGroupName) --sku Standard_LRS
 
-          # Create App Service Plan
-          az appservice plan create --name $(appServicePlanName) --resource-group $(resourceGroupName) --location $(location) --sku Y1 --is-linux
-
-          # Create Function App
-          az functionapp create --name $(functionAppName) --storage-account $(storageAccountName) --resource-group $(resourceGroupName) --plan $(appServicePlanName) --runtime python --runtime-version 3.9 --functions-version 3
-
-          # Create Application Insights
-          az monitor app-insights component create --app $(appInsightsName) --location $(location) --resource-group $(resourceGroupName)
-
-          # Configure Application Insights for Function App
-          appInsightsKey=$(az monitor app-insights component show --app $(appInsightsName) --resource-group $(resourceGroupName) --query "instrumentationKey" --output tsv)
-          az functionapp config appsettings set --name $(functionAppName) --resource-group $(resourceGroupName) --settings "APPINSIGHTS_INSTRUMENTATIONKEY=$appInsightsKey"
+          # Create Function App with Consumption Plan
+          az functionapp create --consumption-plan-location $(location) --name $(functionAppName) --os-type Linux --resource-group $(resourceGroupName) --runtime python --runtime-version 3.11 --storage-account $(storageAccountName)
 
 - stage: DeployCode
   displayName: 'Deploy Code'
@@ -47,12 +37,8 @@ stages:
     displayName: 'Deploy Function App Code'
     steps:
     - checkout: self
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '3.x'
-        addToPath: true
     - script: |
-        python -m venv .venv
+        python3.11 -m venv .venv
         source .venv/bin/activate
         pip install -r requirements.txt
       displayName: 'Install dependencies'
