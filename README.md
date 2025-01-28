@@ -10,18 +10,6 @@ This Azure Function App fetches Azure App Registrations, checks for expiring sec
 - Azure DevOps account
 - Self-hosted agent (optional)
 
-## Project Structure
-
-```
-azure-function-app
-├── aio
-│   ├── __init__.py       # Contains the main logic for the Azure Function
-│   └── function.json     # Configuration for the Azure Function
-├── local.settings.json    # Local configuration settings
-├── requirements.txt       # Required Python packages
-└── README.md              # Project documentation
-```
-
 ## Setup
 
 ### Local Development
@@ -29,8 +17,8 @@ azure-function-app
 1. **Clone the repository:**
 
    ```sh
-   git clone https://github.com/your-repo/AzFuncAppNotify.git
-   cd AzFuncAppNotify/azure-function-app
+   git clone https://github.com/OliPassey/AzAppRegistrationExpiry.git
+   cd AzAppRegistrationExpiry
    ```
 
 2. **Create local dev environment & Install dependencies**:
