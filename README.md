@@ -17,8 +17,8 @@ This Azure Function App fetches Azure App Registrations, checks for expiring sec
 1. **Clone the repository:**
 
    ```sh
-   git clone https://github.com/OliPassey/AzAppRegistrationExpiry.git
-   cd AzAppRegistrationExpiry
+   git clone https://github.com/OliPassey/AzAppRegistrationExpiry.git  
+   cd AzAppRegistrationExpiry  
    ```
 
 2. **Create local dev environment & Install dependencies**:
@@ -31,23 +31,23 @@ This Azure Function App fetches Azure App Registrations, checks for expiring sec
 
 3. **Configure environment variables**:
    Create a local.settings.json file in the root of the function app directory with the following contents  
-   {
-     "IsEncrypted": false,
-     "Values": {
-       "AzureWebJobsStorage": "<YourAzureWebJobsStorage>",
-       "FUNCTIONS_WORKER_RUNTIME": "python",
-       "AZURE_CLIENT_ID": "<YourAzureClientId>",
-       "AZURE_CLIENT_SECRET": "<YourAzureClientSecret>",
-       "AZURE_TENANT_ID": "<YourAzureTenantId>",
-       "SMTP_SERVER": "<YourSmtpServer>",
-       "SMTP_PORT": "<YourSmtpPort>",
-       "SMTP_USERNAME": "<YourSmtpUsername>",
-       "SMTP_PASSWORD": "<YourSmtpPassword>",
-       "FROM_EMAIL": "<YourFromEmail>",
-       "FROM_NAME": "<YourFromName>",
-       "TO_EMAIL": "<YourToEmail>"
-     }
-   }
+   {  
+     "IsEncrypted": false,  
+     "Values": {  
+       "AzureWebJobsStorage": "<YourAzureWebJobsStorage>",  
+       "FUNCTIONS_WORKER_RUNTIME": "python",  
+       "AZURE_CLIENT_ID": "<YourAzureClientId>",  
+       "AZURE_CLIENT_SECRET": "<YourAzureClientSecret>",  
+       "AZURE_TENANT_ID": "<YourAzureTenantId>",  
+       "SMTP_SERVER": "<YourSmtpServer>",  
+       "SMTP_PORT": "<YourSmtpPort>",  
+       "SMTP_USERNAME": "<YourSmtpUsername>",  
+       "SMTP_PASSWORD": "<YourSmtpPassword>",  
+       "FROM_EMAIL": "<YourFromEmail>",  
+       "FROM_NAME": "<YourFromName>",  
+       "TO_EMAIL": "<YourToEmail>"  
+     }  
+   }  
 
 4. **Run the function locally**:
    Use the Azure Functions Core Tools to run the function:
