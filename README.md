@@ -1,6 +1,14 @@
-# Azure Function App
+# Azure Function App for Secret Expiry Notifications
 
-This project is an Azure Function that authenticates to the Microsoft Graph API and fetches app registrations. The function is triggered by an HTTP request.
+This Azure Function App fetches Azure App Registrations, checks for expiring secrets, and sends email notifications to the owners.
+
+## Prerequisites
+
+- Azure Subscription
+- Azure CLI
+- Python 3.11
+- Azure DevOps account
+- Self-hosted agent (optional)
 
 ## Project Structure
 
@@ -14,25 +22,44 @@ azure-function-app
 └── README.md              # Project documentation
 ```
 
-## Setup Instructions
+## Setup
 
-1. **Clone the repository**:
-   ```
-   git clone <repository-url>
-   cd azure-function-app
+### Local Development
+
+1. **Clone the repository:**
+
+   ```sh
+   git clone https://github.com/your-repo/AzFuncAppNotify.git
+   cd AzFuncAppNotify/azure-function-app
    ```
 
-2. **Install dependencies**:
-   Make sure you have Python installed, then run:
+2. **Create local dev environment & Install dependencies**:
+   Make sure you have Python3.11 installed, then run:
    ```
-   pip install -r requirements.txt
+      python3.11 -m venv .venv
+      source .venv/bin/activate
+      pip install -r requirements.txt
    ```
 
 3. **Configure environment variables**:
-   Create a `.env` file or set the following environment variables in `local.settings.json`:
-   - `AZURE_CLIENT_ID`: Your Azure AD application client ID
-   - `AZURE_CLIENT_SECRET`: Your Azure AD application client secret
-   - `AZURE_TENANT_ID`: Your Azure AD tenant ID
+   Create a local.settings.json file in the root of the function app directory with the following contents  
+   {
+     "IsEncrypted": false,
+     "Values": {
+       "AzureWebJobsStorage": "<YourAzureWebJobsStorage>",
+       "FUNCTIONS_WORKER_RUNTIME": "python",
+       "AZURE_CLIENT_ID": "<YourAzureClientId>",
+       "AZURE_CLIENT_SECRET": "<YourAzureClientSecret>",
+       "AZURE_TENANT_ID": "<YourAzureTenantId>",
+       "SMTP_SERVER": "<YourSmtpServer>",
+       "SMTP_PORT": "<YourSmtpPort>",
+       "SMTP_USERNAME": "<YourSmtpUsername>",
+       "SMTP_PASSWORD": "<YourSmtpPassword>",
+       "FROM_EMAIL": "<YourFromEmail>",
+       "FROM_NAME": "<YourFromName>",
+       "TO_EMAIL": "<YourToEmail>"
+     }
+   }
 
 4. **Run the function locally**:
    Use the Azure Functions Core Tools to run the function:
