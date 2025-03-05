@@ -11,20 +11,20 @@ This repository contains an Azure Function that monitors Azure App Registrations
       
  ## Requirements
     
-**Environment Variables**: 
-The following environment variables are required for the function to authenticate to Microsoft Graph API and send emails. 
-They will be set by the pipeline, an AzureDevOps Variable Group called "FunctionVariables" must be created manually.
-      - `AZURE_CLIENT_ID`: The Azure AD application client ID.
-      - `AZURE_CLIENT_SECRET`: The Azure AD application client secret.
-      - `AZURE_TENANT_ID`: The Azure AD tenant ID.
-      - `MONITORED_ACCOUNTS`: A comma-separated list of user principal names (UPNs) to monitor for password expiry.
-      - `SMTP_SERVER`: The SMTP server for sending email notifications.
-      - `SMTP_PORT`: The port to use for SMTP (usually 587).
-      - `SMTP_USERNAME`: The SMTP server username.
-      - `SMTP_PASSWORD`: The SMTP server password.
-      - `FROM_EMAIL`: The email address from which the notifications will be sent.
-      - `FROM_NAME`: The name displayed for the `FROM_EMAIL` address.
-      - `TO_EMAIL`: The recipient email address for the notifications.
+**Environment Variables**:  
+The following environment variables are required for the function to authenticate to Microsoft Graph API and send emails.  
+They will be set by the pipeline, an AzureDevOps Variable Group called "FunctionVariables" must be created manually. 
+      - `AZURE_CLIENT_ID`: The Azure AD application client ID.  
+      - `AZURE_CLIENT_SECRET`: The Azure AD application client secret.  
+      - `AZURE_TENANT_ID`: The Azure AD tenant ID.  
+      - `MONITORED_ACCOUNTS`: A comma-separated list of user principal names (UPNs) to monitor for password expiry.  
+      - `SMTP_SERVER`: The SMTP server for sending email notifications.  
+      - `SMTP_PORT`: The port to use for SMTP (usually 587).  
+      - `SMTP_USERNAME`: The SMTP server username.  
+      - `SMTP_PASSWORD`: The SMTP server password.  
+      - `FROM_EMAIL`: The email address from which the notifications will be sent.  
+      - `FROM_NAME`: The name displayed for the `FROM_EMAIL` address.  
+      - `TO_EMAIL`: The recipient email address for the notifications.  
     
 # Function Workflow
 -----------------
