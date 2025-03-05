@@ -1,1 +1,6 @@
 /aio/__pycache__
+
+.python_packages
+.venv
+local.settings.json
+local.settings copy.json

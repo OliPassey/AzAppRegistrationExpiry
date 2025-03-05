@@ -37,21 +37,39 @@ stages:
     displayName: 'Deploy Function App Code'
     steps:
     - checkout: self
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.11'
+        addToPath: true
     - script: |
-        python3.11 -m venv .venv
+        python -m pip install --upgrade pip
+        python -m venv .venv
         source .venv/bin/activate
         pip install -r requirements.txt
       displayName: 'Install dependencies'
-    - task: ArchiveFiles@2
+    
+    # Create a proper structure for the function app
+    - script: |
+        # Create the zip file with proper structure
+        echo "Creating function app archive..."
+        zip -r $(Build.ArtifactStagingDirectory)/functionapp.zip .
+        ls -la $(Build.ArtifactStagingDirectory)/
+      displayName: 'Archive function app files'
+    
+    # Publish the artifact with a specific name
+    - task: PublishPipelineArtifact@1
       inputs:
-        rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
-        includeRootFolder: false
-        archiveType: 'zip'
-        archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
-        replaceExistingArchive: true
-    - task: AzureWebApp@1
+        targetPath: '$(Build.ArtifactStagingDirectory)/functionapp.zip'
+        artifact: 'functionapp'
+        publishLocation: 'pipeline'
+      displayName: 'Publish Function App Artifact'
+    
+    # Deploy using the AzureFunctionApp task which is better for Function Apps
+    - task: AzureFunctionApp@1
       inputs:
         azureSubscription: $(azureServiceConnection)
-        appType: 'functionapp'
+        appType: 'functionApp'
         appName: $(functionAppName)
-        package: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+        package: '$(Build.ArtifactStagingDirectory)/functionapp.zip'
+        deploymentMethod: 'zipDeploy'
+      displayName: 'Deploy Function App'
