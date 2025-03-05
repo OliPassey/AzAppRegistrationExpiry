@@ -11,8 +11,9 @@ This repository contains an Azure Function that monitors Azure App Registrations
       
  ## Requirements
     
-    - **Azure Function App**: This code is designed to run as an Azure Function.
-    - **Environment Variables**: The following environment variables are required for the function to authenticate to Microsoft Graph API and send emails:
+
+   - **Environment Variables**:
+   - The following environment variables are required for the function to authenticate to Microsoft Graph API and send emails:
       - `AZURE_CLIENT_ID`: The Azure AD application client ID.
       - `AZURE_CLIENT_SECRET`: The Azure AD application client secret.
       - `AZURE_TENANT_ID`: The Azure AD tenant ID.
