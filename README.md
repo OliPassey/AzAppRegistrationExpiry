@@ -1,90 +1,104 @@
-# Azure Function App for Secret Expiry Notifications
+# Azure App Registrations and Entra ID Account Expiry Notification
+    
+This repository contains an Azure Function that monitors Azure App Registrations and Entra ID account credentials, particularly focusing on the expiry of password credentials for both. It automatically fetches app registrations and account details, processes expiry information, and sends notifications to relevant stakeholders.
+    
+## Features
+    
+    - Fetches Azure App Registrations and associated credentials (password credentials).
+    - Retrieves specific Entra ID accounts and checks their password expiration.
+    - Sorts and classifies the credentials based on their expiry dates.
+    - Sends a customized email notification to users, with an HTML table showing the details of expiring or expired credentials.
+      
+ ## Requirements
+    
+    - **Azure Function App**: This code is designed to run as an Azure Function.
+    - **Environment Variables**: The following environment variables are required for the function to authenticate to Microsoft Graph API and send emails:
+      - `AZURE_CLIENT_ID`: The Azure AD application client ID.
+      - `AZURE_CLIENT_SECRET`: The Azure AD application client secret.
+      - `AZURE_TENANT_ID`: The Azure AD tenant ID.
+      - `MONITORED_ACCOUNTS`: A comma-separated list of user principal names (UPNs) to monitor for password expiry.
+      - `SMTP_SERVER`: The SMTP server for sending email notifications.
+      - `SMTP_PORT`: The port to use for SMTP (usually 587).
+      - `SMTP_USERNAME`: The SMTP server username.
+      - `SMTP_PASSWORD`: The SMTP server password.
+      - `FROM_EMAIL`: The email address from which the notifications will be sent.
+      - `FROM_NAME`: The name displayed for the `FROM_EMAIL` address.
+      - `TO_EMAIL`: The recipient email address for the notifications.
+    
+ ## Setup
+    
+ ### 1. Clone the repository:
+ ```bash
+    git clone <repo_url>
+```    
 
-This Azure Function App fetches Azure App Registrations, checks for expiring secrets, and sends email notifications to the owners.
+### 2. Install dependencies:
 
-## Prerequisites
+Ensure that you have the necessary libraries installed in your environment:
 
-- Azure Subscription
-- Azure CLI
-- Python 3.11
-- Azure DevOps account
-- Self-hosted agent (optional)
+```bash
+    pip install -r requirements.txt
+```
 
-## Setup
+### 3. Configure Environment Variables:
 
-### Local Development
+You need to set the following environment variables:
+*   **Azure Authentication**: These variables are used to authenticate against Microsoft Graph API.
+*   **SMTP Configuration**: These variables are used to send email notifications.
+Example for local development (Linux/macOS):
+```bash
+    export AZURE_CLIENT_ID="<your-client-id>"
+    export AZURE_CLIENT_SECRET="<your-client-secret>"
+    export AZURE_TENANT_ID="<your-tenant-id>"
+    export MONITORED_ACCOUNTS="user1@domain.com, user2@domain.com"
+    export SMTP_SERVER="smtp.yourserver.com"
+    export SMTP_PORT="587"
+    export SMTP_USERNAME="your-smtp-username"
+    export SMTP_PASSWORD="your-smtp-password"
+    export FROM_EMAIL="your-email@domain.com"
+    export FROM_NAME="Your Name"
+    export TO_EMAIL="recipient-email@domain.com"
+ ```
 
-1. **Clone the repository:**
+### 4. Deploy to Azure:
 
-   ```sh
-   git clone https://github.com/OliPassey/AzAppRegistrationExpiry.git  
-   cd AzAppRegistrationExpiry  
-   ```
+Follow [Azure Functions deployment guide](https://docs.microsoft.com/en-us/azure/azure-functions/functions-deploy) to deploy the function to Azure.
 
-2. **Create local dev environment & Install dependencies**:
-   Make sure you have Python3.11 installed, then run:
-   ```
-      python3.11 -m venv .venv
-      source .venv/bin/activate
-      pip install -r requirements.txt
-   ```
+Function Workflow
+-----------------
 
-3. **Configure environment variables**:
-   Create a local.settings.json file in the root of the function app directory with the following contents  
-   {  
-     "IsEncrypted": false,  
-     "Values": {  
-       "AzureWebJobsStorage": "<YourAzureWebJobsStorage>",  
-       "FUNCTIONS_WORKER_RUNTIME": "python",  
-       "AZURE_CLIENT_ID": "<YourAzureClientId>",  
-       "AZURE_CLIENT_SECRET": "<YourAzureClientSecret>",  
-       "AZURE_TENANT_ID": "<YourAzureTenantId>",  
-       "SMTP_SERVER": "<YourSmtpServer>",  
-       "SMTP_PORT": "<YourSmtpPort>",  
-       "SMTP_USERNAME": "<YourSmtpUsername>",  
-       "SMTP_PASSWORD": "<YourSmtpPassword>",  
-       "FROM_EMAIL": "<YourFromEmail>",  
-       "FROM_NAME": "<YourFromName>",  
-       "TO_EMAIL": "<YourToEmail>"  
-     }  
-   }  
+1.  **Authentication**: The function authenticates to Microsoft Graph API using the Azure AD application credentials (Client ID, Client Secret, Tenant ID).
+2.  **Fetching Data**:
+    *   The function fetches all app registrations and their associated password credentials using Microsoft Graph API.
+    *   It fetches user account details for the specified Entra ID accounts and checks for password expiration.
+3.  **Processing Expiry Dates**: The credentials are processed to calculate the days until expiration. The credentials are sorted and categorized as:
+    *   **Green**: More than 30 days to expiration.
+    *   **Yellow**: Between 8-30 days to expiration.
+    *   **Orange**: 7 days or less to expiration.
+    *   **Red**: Expired.
+    *   **Blue**: No expiration set.
+4.  **Email Notification**:
+    *   The function generates an HTML report that contains all relevant app registrations and account details.
+    *   The report is sent via email to the specified recipient and optionally to the owners of the apps.
 
-4. **Run the function locally**:
-   Use the Azure Functions Core Tools to run the function:
-   ```
-   func start
-   ```
+Email Notification Example
+--------------------------
 
-## Usage
+The email notification contains an HTML table that shows:
+*   **App Registrations**: Display name, secret name, expiry date, days to expiry, and owners.
+*   **Entra ID Accounts**: Display name, user principal name, password expiry date, and status.
 
-Once the function is running, it will run every week day morning at 9am and send an email with results. The TO_EMAIL should be the administrator email for EntraID or whoever looks after App Registrations. It will also CC: all App Owners as listed in the App Registration.  
+### Color Coding in the Notification:
 
-## Deployment  
+*   **Green**: More than 30 days until expiry.
+*   **Yellow**: Between 8-30 days until expiry.
+*   **Orange**: 7 days or less until expiry.
+*   **Red**: Expired.
+*   **Blue**: No expiration set.
 
-1. **Create an Azure DevOps Project (Private)** 
-2. **Create a Variable Group in Azure DevOps:**
+Notes
+-----
 
-Go to Pipelines > Library.  
+*   Ensure that the monitored accounts list is correctly populated with the UPNs of the users whose password expiry you want to track.
+*   The email notification will only be sent if there are app registrations or Entra ID accounts with upcoming or expired credentials.
 
-Click on + Variable group.  
-
-Name your variable group (e.g., MyVariableGroup).  
-
-Add the following variables and mark sensitive variables as secrets:
-
-AzureWebJobsStorage  
-AZURE_CLIENT_ID  
-AZURE_CLIENT_SECRET  
-AZURE_TENANT_ID  
-SMTP_SERVER  
-SMTP_PORT  
-SMTP_USERNAME  
-SMTP_PASSWORD  
-FROM_EMAIL  
-FROM_NAME  
-TO_EMAIL  
-
-3. **Create a Pipeline from the Azure-pipeline.yaml file in the root of the repo**
-4. **Run the Pipeline:**
-
-Trigger the pipeline to deploy the infrastructure and the function app code.
